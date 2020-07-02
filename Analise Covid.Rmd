@@ -1,0 +1,139 @@
+---
+title: "Análise Covid-19"
+author: "Sislan Davys"
+date: "30/06/2020"
+output: html_document
+  html_document:
+    toc: TRUE
+    toc_float: TRUE
+---
+
+```{r setup, include=FALSE}
+# instale e adicione outros pacotes que achar necessário
+library(tidyverse)
+library(geofacet)
+library(here)
+library(lubridate)
+library(patchwork)
+library(readxl)
+library(scales)
+library(zoo)
+library(ggthemes)
+# configurações para evitar mostrar mensagens e erros
+knitr::opts_chunk$set(error = FALSE, comment = NA, warning = FALSE, message = FALSE)
+```
+
+
+
+## Brasil
+
+
+covid <- read_xlsx(here("data/HIST_PAINEL_COVIDBR_30jun2020.xlsx"),
+                   guess_max = 100000)
+glimpse(covid)
+
+covid_br <- covid %>%
+  filter(is.na(estado), is.na(codmun))
+  select(-estado, -municipio, -codmun, -codRegiaoSaude, -nomeRegiaoSaude)
+
+glimpse(covid_br)
+
+
+### Casos no Brasil
+
+plot_br <- ggplot(covid_br, aes(x = data, y = casosAcumulado)) +
+  geom_col() +
+  labs(x = "Dia da notificação", y = "Casos Acumulados") +
+  ggtitle("Casos Acumulados no Brasil")
+  
+
+plot_br + ggthemes::theme_economist()
+
+### Óbitos no Brasil
+
+plot_Obito_br <- ggplot(covid_br, aes(x = data, y = obitosAcumulado)) +
+  geom_col()+
+  labs(x = "Dia da Notificação", y = "Óbitos Acumulados") + 
+  ggtitle("Óbitos Acumulados no Brasil")
+  
+plot_Obito_br + ggthemes::theme_economist()
+  
+plot_obitos_novos <- ggplot(covid_br, aes(x = data, y = obitosNovos)) +
+  geom_col()+
+  labs(x = "Dia da Notificação", y = "Óbitos Novos") + 
+  ggtitle("Óbitos Acumulados no Brasil")
+  
+plot_obitos_novos + ggthemes::theme_economist()
+
+## Estados
+
+
+
+covid_estados <- covid %>%
+  filter(!is.na(estado), is.na(codmun))
+
+glimpse(covid_estados)
+
+
+ggplot(covid_estados, aes(data, casosNovos)) +
+  geom_line() +
+  facet_wrap(vars(estado), ncol = 4)
+  
+
+
+### Casos nos estados
+
+ggplot(covid_estados, aes(data, casosAcumulado)) +
+  geom_line() +
+  facet_wrap(vars(estado), ncol = 4) + scale_y_log10()
+
+### Óbitos nos estados
+
+ggplot(covid_estados, aes(data, obitosNovos)) +
+  geom_line() +
+  facet_wrap(vars(estado), ncol = 4) 
+  
+
+#Casos nos municipios Litoral Norte PB
+
+covid_municipios <- covid %>%
+  filter(!is.na(estado), !is.na(municipio))
+
+glimpse(covid_municipios)
+
+
+
+
+  
+covid_test <- covid_municipios %>%
+  filter(estado == "PB", nomeRegiaoSaude == "14ª REGIAO")
+ 
+
+glimpse(covid_test)
+
+
+plot_vale <- ggplot(covid_test, aes(data, casosAcumulado)) +
+  geom_line() +
+  facet_wrap(vars(municipio), ncol = 4) + scale_y_log10()
+  
+plot_vale
+  
+  
+
+casos_mt_mme_rt <- covid_municipios %>%
+  filter(municipio == "Mataraca" | municipio == "Mamanguape")
+  
+casos_mt_mme_rt
+
+plot_mun <- ggplot(casos_mt_mme_rt, aes(x = data, y = casosAcumulado, color = municipio)) + geom_line()  +
+labs(x = "Período da Notificação", y = "Casos Acumulados")+
+scale_y_log10()
+
+plot_mun
+
+
+
+
+
+
+
